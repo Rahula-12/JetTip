@@ -3,6 +3,7 @@ package com.example.jettip
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,18 +61,30 @@ class MainActivity : ComponentActivity() {
 //@Preview
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
+
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().verticalScroll(
+            state = ScrollState(0)
+        )
     ) {
-        TotalBill()
-        SetParameters()
+        var billToShow by rememberSaveable {
+            mutableStateOf(0f)
+        }
+        TotalBill(
+            billToShow="%.2f".format(billToShow)
+        )
+        SetParameters(
+            updateBillToShow={
+                billToShow=it
+            }
+        )
     }
 }
 
 @Composable
 fun TotalBill(
     modifier: Modifier=Modifier,
-    bill:String="$100"
+    billToShow:String=""
 ) {
     Surface(
         modifier= modifier
@@ -101,7 +114,7 @@ fun TotalBill(
                 )
             )
             Text(
-                text = bill,
+                text = "$$billToShow",
 //                modifier=modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 fontSize = TextUnit(40f, TextUnitType.Sp),
@@ -121,7 +134,8 @@ fun TotalBill(
 @Preview
 @Composable
 fun SetParameters(
-    modifier: Modifier=Modifier
+    modifier: Modifier=Modifier,
+    updateBillToShow:(Float)->Unit={}
 ) {
     Card(
         modifier = modifier
@@ -147,13 +161,20 @@ fun SetParameters(
                     top = 10.dp
                 )
         ) {
-            var text by rememberSaveable {
-                mutableStateOf("")
+            var currBill by rememberSaveable {
+                mutableStateOf(0f)
+            }
+            var numberOfPersons by rememberSaveable {
+                mutableStateOf(1)
+            }
+            var tipPercent by rememberSaveable {
+                mutableStateOf(0f)
             }
             OutlinedTextField(
-                value = text,
+                value = currBill.toString(),
                 onValueChange = {
-                    text=it
+                    currBill = it.toFloat()
+                    if(numberOfPersons!=0) updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
                 },
                 modifier=modifier.fillMaxWidth(),
                 leadingIcon = {
@@ -187,7 +208,10 @@ fun SetParameters(
                     Surface(
                         shape = CircleShape,
                         shadowElevation=2.5.dp,
-                        modifier = modifier.clickable {}
+                        modifier = modifier.clickable {
+                            numberOfPersons++
+                            updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
+                        }
                     ){
                         Box(
                             contentAlignment = Alignment.Center
@@ -200,7 +224,7 @@ fun SetParameters(
                         }
                     }
                     Text(
-                        text =  "1",
+                        text =  numberOfPersons.toString(),
                         modifier=modifier.padding(
                             start = 10.dp,
                             end=10.dp
@@ -210,7 +234,10 @@ fun SetParameters(
                     Surface(
                         shape = CircleShape,
                         shadowElevation=2.5.dp,
-                        modifier = modifier.clickable {}
+                        modifier = modifier.clickable {
+                            if(numberOfPersons>1)   numberOfPersons--
+                            updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
+                        }
                     ){
                         Box(
                             contentAlignment = Alignment.Center
@@ -236,12 +263,12 @@ fun SetParameters(
                     modifier=modifier.weight(1.5f)
                 )
                 Text(
-                    text = "$33.0",
+                    text = "$${"%.2f".format((currBill*tipPercent)/100f)}",
                     modifier=modifier.weight(1f)
                 )
             }
             Text(
-                text = "33%",
+                text = "${"%.2f".format(tipPercent)}%",
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(
@@ -250,12 +277,12 @@ fun SetParameters(
                 ,
                 textAlign = TextAlign.Center
             )
-            var sliderPosition by remember {
-                mutableStateOf(0f)
-            }
             Slider(
-                value = sliderPosition,
-                onValueChange = { sliderPosition = it },
+                value = tipPercent,
+                onValueChange = {
+                    tipPercent = it
+                    updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
+                                },
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.secondary,
                     activeTrackColor = MaterialTheme.colorScheme.secondary,

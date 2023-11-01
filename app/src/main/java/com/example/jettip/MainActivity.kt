@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.example.jettip.ui.theme.JetTipTheme
 import com.example.jettip.ui.theme.Purple80
+import java.security.spec.ECField
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,9 +64,11 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(modifier: Modifier = Modifier) {
 
     Column(
-        modifier = modifier.fillMaxSize().verticalScroll(
-            state = ScrollState(0)
-        )
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(
+                state = ScrollState(0)
+            )
     ) {
         var billToShow by rememberSaveable {
             mutableStateOf(0f)
@@ -162,6 +165,9 @@ fun SetParameters(
             var currBill by rememberSaveable {
                 mutableStateOf(0f)
             }
+            var currBillString =rememberSaveable {
+                mutableStateOf("")
+            }
             var numberOfPersons by rememberSaveable {
                 mutableStateOf(1)
             }
@@ -169,10 +175,17 @@ fun SetParameters(
                 mutableStateOf(0f)
             }
             OutlinedTextField(
-                value = currBill.toString(),
+                value = currBillString.value,
                 onValueChange = {
-                    currBill = it.toFloat()
-                    if(numberOfPersons!=0) updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
+                    currBillString.value = it
+                    try{
+                        currBill=currBillString.value.toFloat()
+                        if(numberOfPersons!=0) updateBillToShow((currBill+(tipPercent*currBill)/100f)/numberOfPersons)
+                    }
+                    catch (_:Exception) {
+
+                    }
+
                 },
                 modifier=modifier.fillMaxWidth(),
                 leadingIcon = {

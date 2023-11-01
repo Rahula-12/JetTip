@@ -73,11 +73,9 @@ fun MainScreen(modifier: Modifier = Modifier) {
         TotalBill(
             billToShow="%.2f".format(billToShow)
         )
-        SetParameters(
-            updateBillToShow={
-                billToShow=it
-            }
-        )
+        SetParameters {
+            billToShow = it
+        }
     }
 }
 
